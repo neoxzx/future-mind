@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioSync Pro - EMF Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #8c82ff; --danger: #ff4a4a; --bg: #0f1020; --card: #1a1b3a; }
+        body { background-color: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; padding: 20px; opacity: 0; animation: fadeIn 1s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .container { width: 100%; max-width: 400px; background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); text-align: center; margin-top: 40px; }
+        .scanner-ring { width: 150px; height: 150px; border: 4px solid var(--primary); border-radius: 50%; margin: 0 auto 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #emf-value { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; font-weight: bold; color: var(--primary); }
+        .chart-box { height: 100px; margin-bottom: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; }
+        button { width: 100%; padding: 12px; border-radius: 10px; border: none; font-family: 'Orbitron'; cursor: pointer; margin-bottom: 10px; }
+        .btn-main { background: var(--primary); color: white; }
+        .back-btn { position: fixed; top: 20px; left: 20px; background: rgba(255,255,255,0.1); border: 1px solid var(--primary); color: var(--primary); padding: 8px 15px; border-radius: 10px; text-decoration: none; font-size: 0.7rem; }
+        .hidden { display: none; }
+        .danger-state { border-color: var(--danger); box-shadow: 0 0 20px var(--danger); }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← HUB</a>
+    <div class="container">
+        <h1 style="font-size: 1.2rem; font-family: 'Orbitron'; color: var(--primary);">BIO-SYNC LAB</h1>
+        <div class="scanner-ring" id="ring"><div id="emf-value">0</div><div style="font-size: 0.7rem; color: #888;">µTesla</div></div>
+        <div class="chart-box"><canvas id="emfChart"></canvas></div>
+        <button class="btn-main" onclick="initBioSync()">START SCANNER</button>
+        <div id="audit-controls" class="hidden">
+            <button style="background:transparent; border:1px solid white; color:white" onclick="saveLog()">💾 SAVE LOG</button>
+        </div>
+    </div>
+    <audio id="alarm" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+    <script>
+        let historyData = Array(20).fill(0);
+        const ctx = document.getElementById('emfChart').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: Array(20).fill(''), datasets: [{ data: historyData, borderColor: '#8c82ff', pointRadius: 0, fill: true, backgroundColor: 'rgba(140, 130, 255, 0.1)', tension: 0.4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { display: false } } }
+        });
+
+        async function initBioSync() {
+            if ('Magnetometer' in window) {
+                const sensor = new Magnetometer({frequency: 10});
+                sensor.addEventListener('reading', () => {
+                    const val = Math.sqrt(Math.pow(sensor.x,2)+Math.pow(sensor.y,2)+Math.pow(sensor.z,2)).toFixed(2);
+                    document.getElementById('emf-value').innerText = val;
+                    historyData.push(val); historyData.shift(); chart.update();
+                    if(val > 100) { document.getElementById('ring').classList.add('danger-state'); document.getElementById('alarm').play(); }
+                    else { document.getElementById('ring').classList.remove('danger-state'); }
+                });
+                sensor.start();
+                document.getElementById('audit-controls').classList.remove('hidden');
+            } else { alert("Sensor Magnetometer tidak terdeteksi."); }
+        }
+    </script>
+</body>
+</html>

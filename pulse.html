@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseCircadian - Cosmic Breathing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --cyan: #00f2ff; --space: #090a0f; }
+        body { background: var(--space); color: white; font-family: 'Orbitron', sans-serif; overflow: hidden; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; opacity: 0; animation: fadeIn 1.2s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        canvas { position: absolute; z-index: -1; }
+        .container { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 40px; border-radius: 30px; border: 1px solid rgba(0,242,255,0.2); text-align: center; width: 320px; }
+        .orbit-box { position: relative; width: 120px; height: 120px; margin: 20px auto; border: 1px dashed var(--cyan); border-radius: 50%; }
+        #sun { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25px; height: 25px; background: #ffd700; border-radius: 50%; box-shadow: 0 0 30px #ff8c00; }
+        #earth { position: absolute; width: 8px; height: 8px; background: #4a90e2; border-radius: 50%; top: -4px; left: 50%; offset-path: path('M 0,60 A 60,60 0 1,1 0,60.1'); animation: orbit 60s linear infinite; }
+        @keyframes orbit { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+        .pulse-ring { width: 70px; height: 70px; border: 3px solid var(--cyan); border-radius: 50%; margin: 25px auto; transition: 1s ease-in-out; }
+        button { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 10px 20px; border-radius: 50px; cursor: pointer; font-family: 'Orbitron'; width: 100%; margin-top: 10px; }
+        .back-btn { position: fixed; top: 20px; left: 20px; background: rgba(255,255,255,0.1); border: 1px solid var(--cyan); color: var(--cyan); padding: 8px 15px; border-radius: 10px; text-decoration: none; font-size: 0.7rem; z-index: 100; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← HUB</a>
+    <canvas id="stars"></canvas>
+    <div class="container">
+        <h2 style="font-size: 0.9rem; color: var(--cyan);">PULSECIRCADIAN</h2>
+        <div class="orbit-box"><div id="sun"></div><div id="earth"></div></div>
+        <p id="instruction" style="font-size: 0.7rem; margin: 20px 0;">SINKRONISASI KOSMIK</p>
+        <div class="pulse-ring" id="pulse"></div>
+        <button onclick="startSync()">MULAI SESI</button>
+    </div>
+
+    <script>
+        const cvs = document.getElementById('stars');
+        const ctx = cvs.getContext('2d');
+        let starArr = [];
+        function init() {
+            cvs.width = window.innerWidth; cvs.height = window.innerHeight;
+            for(let i=0; i<100; i++) starArr.push({x:Math.random()*cvs.width, y:Math.random()*cvs.height, s:Math.random()*1.5});
+        }
+        function draw() {
+            ctx.clearRect(0,0,cvs.width, cvs.height); ctx.fillStyle="white";
+            starArr.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill(); s.y += 0.1; if(s.y > cvs.height) s.y=0; });
+            requestAnimationFrame(draw);
+        }
+        init(); draw();
+
+        let audioCtx;
+        function startSync() {
+            if(!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                
+                function breathe() {
+                    const duration = 4;
+                    document.getElementById('instruction').innerText = "TARIK NAPAS...";
+                    document.getElementById('pulse').style.transform = "scale(2)";
+                    osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + duration);
+                    gain.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + duration);
+                    setTimeout(() => {
+                        document.getElementById('instruction').innerText = "BUANG NAPAS...";
+                        document.getElementById('pulse').style.transform = "scale(1)";
+                        osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + duration);
+                        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                        setTimeout(breathe, duration * 1000);
+                    }, duration * 1000);
+                }
+                breathe();
+            }
+        }
+    </script>
+</body>
+</html>

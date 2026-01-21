@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Future-Mind Hub | Athalla</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --primary: #00f2ff; 
+            --bg: #05070a; 
+            --card: rgba(255, 255, 255, 0.05); 
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            margin: 0; background: var(--bg); color: white; 
+            font-family: 'Inter', sans-serif; overflow-x: hidden;
+            opacity: 0; animation: fadeInPage 1.2s forwards;
+        }
+
+        @keyframes fadeInPage { to { opacity: 1; } }
+
+        #background-canvas { position: fixed; top: 0; left: 0; z-index: -1; width: 100%; height: 100%; }
+
+        .container { 
+            max-width: 1000px; margin: 0 auto; 
+            padding: 40px 20px; text-align: center; 
+            transition: opacity 0.6s ease, transform 0.6s ease; 
+        }
+        
+        .fade-out { opacity: 0; transform: translateY(-20px) scale(0.98); }
+
+        header h1 { 
+            font-family: 'Orbitron', sans-serif; 
+            font-size: clamp(1.8rem, 10vw, 3.5rem); 
+            letter-spacing: 5px; 
+            color: var(--primary); margin-bottom: 10px; 
+            text-shadow: 0 0 15px rgba(0, 242, 255, 0.5);
+        }
+
+        .subtitle { font-size: 0.9rem; color: #888; margin-bottom: 40px; padding: 0 10px; }
+
+        /* Project Grid */
+        .project-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 20px; 
+        }
+
+        .project-card { 
+            background: var(--card); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            padding: 30px 20px; border-radius: 20px; 
+            cursor: pointer; transition: 0.3s ease;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .project-card:hover { border-color: var(--primary); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+        .project-card:active { transform: scale(0.95); background: rgba(0, 242, 255, 0.1); }
+
+        .card-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
+        .project-card h2 { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: var(--primary); margin: 10px 0; }
+        .project-card p { font-size: 0.8rem; color: #ccc; line-height: 1.5; margin: 0; }
+
+        /* LOADER FIX: Tegak Lurus & Sempurna */
+        .loader-wrapper { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh; 
+            background: var(--bg); z-index: 9999; 
+            display: none; flex-direction: column; justify-content: center; align-items: center; 
+            opacity: 0; transition: opacity 0.5s ease;
+        }
+
+        .loader-content {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .spinner { 
+            width: 50px; height: 50px; 
+            border: 3px solid rgba(0, 242, 255, 0.1); border-top: 3px solid var(--primary); 
+            border-radius: 50%; animation: spin 0.8s linear infinite; 
+            margin-bottom: 20px;
+        }
+
+        #loader-text {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Music Control */
+        #music-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 50px; height: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--primary);
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 1000; transition: 0.3s;
+        }
+        
+        #music-btn:hover { background: rgba(0, 242, 255, 0.2); }
+
+        footer { margin-top: 60px; font-size: 0.7rem; color: #444; letter-spacing: 2px; }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            .project-grid { grid-template-columns: 1fr; }
+            header h1 { letter-spacing: 3px; }
+            .container { padding: 30px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="background-canvas"></canvas>
+
+    <audio id="bg-music" loop>
+        <source src="Stylish Technology Corporate by Infraction [No Copyright Music] _ Underwater.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="music-btn" onclick="toggleMusic()">
+        <span id="music-icon">🔇</span>
+    </div>
+
+    <div id="loader" class="loader-wrapper">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <div id="loader-text">INITIALIZING...</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>FUTURE MIND</h1>
+            <p class="subtitle">Personal Technology Hub &bull; Athalla 2026</p>
+        </header>
+
+        <main class="project-grid">
+            <div class="project-card" onclick="goToProject('sonic.html', 'SonicClean')">
+                <span class="card-icon">🎙️</span>
+                <h2>SonicClean</h2>
+                <p>Analisis kebisingan suara real-time.</p>
+            </div>
+
+            <div class="project-card" onclick="goToProject('bio.html', 'BioSync')">
+                <span class="card-icon">⚡</span>
+                <h2>BioSync</h2>
+                <p>Audit radiasi elektromagnetik (EMF).</p>
+            </div>
+
+            <div class="project-card" onclick="goToProject('pulse.html', 'PulseCircadian')">
+                <span class="card-icon">🪐</span>
+                <h2>PulseCircadian</h2>
+                <p>Meditasi pernapasan orbit kosmik.</p>
+            </div>
+
+            <div class="project-card" onclick="goToProject('app.html', 'All-in-One Mobile')">
+                <span class="card-icon">📱</span>
+                <h2>Mobile Hub</h2>
+                <p>Versi mobile mudah di akses</p>
+            </div>
+        </main>
+
+        <footer>ENGINEERED BY ATHALLA</footer>
+    </div>
+
+    <script>
+        // Star/Network Background Animation
+        const canvas = document.getElementById('background-canvas');
+        const ctx = canvas.getContext('2d');
+        let points = [];
+        
+        function init() {
+            canvas.width = window.innerWidth; 
+            canvas.height = window.innerHeight;
+            const count = window.innerWidth < 600 ? 40 : 80;
+            points = Array.from({length: count}, () => ({ 
+                x: Math.random()*canvas.width, y: Math.random()*canvas.height, 
+                vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4 
+            }));
+        }
+
+        function animate() {
+            ctx.clearRect(0,0,canvas.width,canvas.height); 
+            ctx.strokeStyle = 'rgba(0, 242, 255, 0.15)';
+            points.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy;
+                if(p.x<0 || p.x>canvas.width) p.vx*=-1; 
+                if(p.y<0 || p.y>canvas.height) p.vy*=-1;
+                for(let j=i+1; j<points.length; j++) {
+                    let d = Math.hypot(p.x-points[j].x, p.y-points[j].y);
+                    if(d < (window.innerWidth < 600 ? 100 : 150)) { 
+                        ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(points[j].x,points[j].y); ctx.stroke(); 
+                    }
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        // Project Navigation & Loader
+        function goToProject(url, name) {
+            const container = document.querySelector('.container');
+            const loader = document.getElementById('loader');
+            const loaderText = document.getElementById('loader-text');
+
+            // Fade out the main hub
+            container.classList.add('fade-out');
+
+            setTimeout(() => {
+                loader.style.display = 'flex';
+                // Small delay to trigger opacity transition
+                setTimeout(() => {
+                    loader.style.opacity = '1';
+                }, 10);
+                loaderText.innerText = `OPENING ${name.toUpperCase()}...`;
+            }, 500);
+
+            // Redirect after animation
+            setTimeout(() => { 
+                window.location.href = url; 
+            }, 2000);
+        }
+
+        // Music Control
+        function toggleMusic() {
+            const m = document.getElementById('bg-music');
+            const icon = document.getElementById('music-icon');
+            if (m.paused) { 
+                m.play(); 
+                icon.innerText = "🔊"; 
+            } else { 
+                m.pause(); 
+                icon.innerText = "🔇"; 
+            }
+        }
+
+        init(); animate();
+        window.onresize = init;
+    </script>
+</body>
+</html>

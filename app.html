@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Future-Mind App | Athalla</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root { 
+            --primary: #00f2ff; --purple: #8c82ff; --blue: #38bdf8;
+            --bg: #05070a; --card: rgba(255, 255, 255, 0.05); 
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
+
+        /* Navigation */
+        .page { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh; 
+            display: none; padding: 20px; overflow-y: auto;
+            animation: slideUp 0.4s ease-out forwards;
+        }
+        .page.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .back-btn { 
+            display: inline-block; margin-bottom: 20px; padding: 10px 15px; 
+            background: var(--card); border: 1px solid var(--primary); 
+            border-radius: 12px; color: var(--primary); text-decoration: none; font-family: 'Orbitron'; font-size: 0.7rem;
+        }
+
+        /* --- HUB STYLE --- */
+        .hub-container { text-align: center; padding-top: 40px; }
+        .hub-title { font-family: 'Orbitron'; font-size: 2rem; color: var(--primary); letter-spacing: 4px; }
+        .grid { display: grid; gap: 15px; margin-top: 30px; }
+        .card { 
+            background: var(--card); padding: 25px; border-radius: 20px; 
+            border: 1px solid rgba(255,255,255,0.1); transition: 0.3s;
+        }
+        .card:active { transform: scale(0.95); background: rgba(0,242,255,0.1); }
+        .card h2 { font-family: 'Orbitron'; font-size: 1.1rem; margin: 10px 0; color: var(--primary); }
+
+        /* --- SHARED APP STYLE --- */
+        .app-box { background: var(--card); padding: 25px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .val-big { font-family: 'Orbitron'; font-size: 3.5rem; margin: 15px 0; color: var(--primary); }
+        .chart-h { height: 120px; margin: 15px 0; }
+        button { 
+            width: 100%; padding: 15px; border-radius: 15px; border: none; 
+            font-family: 'Orbitron'; font-weight: bold; cursor: pointer; 
+        }
+        .btn-blue { background: var(--blue); color: #000; }
+        .btn-purple { background: var(--purple); color: #000; }
+
+        /* --- PULSE SPECIFIC --- */
+        .pulse-ring { width: 80px; height: 80px; border: 3px solid var(--primary); border-radius: 50%; margin: 30px auto; transition: 1s ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div id="hub" class="page active">
+        <div class="hub-container">
+            <h1 class="hub-title">FUTURE-MIND</h1>
+            <p style="color:#666; font-size:0.8rem">SYSTEMS CORE v2.0</p>
+            <div class="grid">
+                <div class="card" onclick="showPage('sonic')">
+                    <span style="font-size:2rem">🎙️</span>
+                    <h2>SonicClean</h2>
+                    <p style="font-size:0.7rem; color:#aaa">Noise Analyzer</p>
+                </div>
+                <div class="card" onclick="showPage('bio')">
+                    <span style="font-size:2rem">⚡</span>
+                    <h2>BioSync</h2>
+                    <p style="font-size:0.7rem; color:#aaa">EMF Detector</p>
+                </div>
+                <div class="card" onclick="showPage('pulse')">
+                    <span style="font-size:2rem">🪐</span>
+                    <h2>PulseCircadian</h2>
+                    <p style="font-size:0.7rem; color:#aaa">Breath Sync</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sonic" class="page">
+        <button class="back-btn" onclick="showPage('hub')">← BACK</button>
+        <div class="app-box">
+            <h2 style="font-family: 'Orbitron'; color: var(--blue)">SONICCLEAN</h2>
+            <div class="val-big"><span id="db-val">0</span><small style="font-size:1rem">dB</small></div>
+            <div class="chart-h"><canvas id="sonicChart"></canvas></div>
+            <button class="btn-blue" onclick="startSonic()">START MONITORING</button>
+        </div>
+    </div>
+
+    <div id="bio" class="page">
+        <button class="back-btn" onclick="showPage('hub')">← BACK</button>
+        <div class="app-box">
+            <h2 style="font-family: 'Orbitron'; color: var(--purple)">BIO-SYNC</h2>
+            <div class="val-big"><span id="emf-val">0</span><small style="font-size:1rem">µT</small></div>
+            <div class="chart-h"><canvas id="bioChart"></canvas></div>
+            <button class="btn-purple" onclick="startBio()">ACTIVATE SENSOR</button>
+        </div>
+    </div>
+
+    <div id="pulse" class="page">
+        <button class="back-btn" onclick="showPage('hub')">← BACK</button>
+        <div class="app-box">
+            <h2 style="font-family: 'Orbitron'; color: var(--primary)">PULSE</h2>
+            <p id="p-status" style="font-size:0.8rem">READY TO SYNC</p>
+            <div class="pulse-ring" id="ring"></div>
+            <button class="btn-blue" style="background:var(--primary)" onclick="startPulse()">START SESSION</button>
+        </div>
+    </div>
+
+    <script>
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // --- SONIC LOGIC ---
+        let sonicChart;
+        function startSonic() {
+            const ctx = document.getElementById('sonicChart').getContext('2d');
+            let data = Array(20).fill(0);
+            sonicChart = new Chart(ctx, {
+                type: 'line', data: { labels: data, datasets: [{data, borderColor: '#38bdf8', pointRadius:0, fill:true, backgroundColor:'rgba(56,189,248,0.1)'}]},
+                options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{display:false},x:{display:false}}}
+            });
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                const audioContext = new AudioContext();
+                const analyzer = audioContext.createAnalyser();
+                const microphone = audioContext.createMediaStreamSource(stream);
+                microphone.connect(analyzer);
+                const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+                function update() {
+                    analyzer.getByteFrequencyData(dataArray);
+                    let db = Math.round(dataArray.reduce((a,b)=>a+b)/dataArray.length * 1.5);
+                    document.getElementById('db-val').innerText = db;
+                    data.push(db); data.shift(); sonicChart.update();
+                    requestAnimationFrame(update);
+                }
+                update();
+            });
+        }
+
+        // --- BIO LOGIC ---
+        let bioChart;
+        function startBio() {
+            const ctx = document.getElementById('bioChart').getContext('2d');
+            let data = Array(20).fill(0);
+            bioChart = new Chart(ctx, {
+                type: 'line', data: { labels: data, datasets: [{data, borderColor: '#8c82ff', pointRadius:0, fill:true, backgroundColor:'rgba(140,130,255,0.1)'}]},
+                options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{display:false},x:{display:false}}}
+            });
+            if ('Magnetometer' in window) {
+                const sensor = new Magnetometer({frequency: 10});
+                sensor.addEventListener('reading', () => {
+                    let val = Math.sqrt(sensor.x**2 + sensor.y**2 + sensor.z**2).toFixed(2);
+                    document.getElementById('emf-val').innerText = val;
+                    data.push(val); data.shift(); bioChart.update();
+                });
+                sensor.start();
+            } else { alert("Magnetometer not supported"); }
+        }
+
+        // --- PULSE LOGIC ---
+        function startPulse() {
+            let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            
+            function breathe() {
+                document.getElementById('p-status').innerText = "INHALING...";
+                document.getElementById('ring').style.transform = "scale(2)";
+                osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 4);
+                gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 4);
+                setTimeout(() => {
+                    document.getElementById('p-status').innerText = "EXHALING...";
+                    document.getElementById('ring').style.transform = "scale(1)";
+                    osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 4);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 4);
+                    setTimeout(breathe, 4000);
+                }, 4000);
+            }
+            breathe();
+        }
+    </script>
+</body>
+</html>

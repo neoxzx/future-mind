@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SonicClean Pro - Noise Monitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- CSS SECTION --- */
+        :root { 
+            --primary: #38bdf8; 
+            --bg: #0f172a; 
+            --card: #1e293b; 
+            --danger: #f87171; 
+            --safe: #4ade80; 
+        }
+
+        * { box-sizing: border-box; }
+
+        body { 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px; 
+            opacity: 0; 
+            animation: fadeIn 1s ease-out forwards; 
+        }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Tombol Kembali ke Hub */
+        .back-btn { 
+            position: fixed; 
+            top: 20px; 
+            left: 20px; 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid var(--primary); 
+            color: var(--primary); 
+            padding: 10px 18px; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            font-family: 'Orbitron';
+            font-size: 0.7rem; 
+            z-index: 100; 
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: var(--bg);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .app-container { 
+            width: 100%; 
+            max-width: 450px; 
+            background: var(--card); 
+            padding: 40px 30px; 
+            border-radius: 30px; 
+            text-align: center; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        h1 { 
+            font-family: 'Orbitron', sans-serif; 
+            color: var(--primary); 
+            margin-bottom: 5px; 
+            letter-spacing: 2px;
+            font-size: 1.5rem;
+        }
+
+        .meter-box { 
+            font-size: 5rem; 
+            font-family: 'Orbitron', sans-serif; 
+            margin: 25px 0; 
+            color: var(--primary); 
+            text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+
+        .status-badge { 
+            display: inline-block; 
+            padding: 10px 20px; 
+            border-radius: 50px; 
+            font-weight: bold; 
+            font-size: 0.75rem; 
+            margin-bottom: 25px; 
+            letter-spacing: 1px;
+            transition: 0.4s;
+        }
+
+        .badge-safe { background: rgba(74, 222, 128, 0.1); color: var(--safe); border: 1px solid var(--safe); }
+        .badge-danger { background: rgba(248, 113, 113, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+
+        .chart-container { 
+            height: 160px; 
+            background: rgba(0,0,0,0.3); 
+            border-radius: 16px; 
+            padding: 15px; 
+            margin-bottom: 25px; 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        button.start-btn { 
+            width: 100%; 
+            padding: 18px; 
+            background: var(--primary); 
+            border: none; 
+            border-radius: 15px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            color: #0f172a;
+            font-family: 'Orbitron';
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        button.start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.4);
+        }
+
+        button.start-btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">← BACK TO HUB</a>
+
+    <div class="app-container">
+        <h1>SONICCLEAN</h1>
+        <p style="color: #888; font-size: 0.8rem; margin-top: 0;">REAL-TIME NOISE ANALYZER</p>
+        
+        <div class="meter-box">
+            <span id="db-val">0</span><small style="font-size: 1.2rem; margin-left: 5px;">dB</small>
+        </div>
+        
+        <div id="status" class="status-badge badge-safe">LINGKUNGAN TENANG</div>
+        
+        <div class="chart-container">
+            <canvas id="noiseChart"></canvas>
+        </div>
+        
+        <button class="start-btn" onclick="startMonitoring()">MULAI MONITORING</button>
+    </div>
+
+    <script>
+        /* --- JAVASCRIPT SECTION --- */
+        let dbHistory = Array(20).fill(0);
+        let chart;
+        
+        // Inisialisasi Chart.js
+        const ctx = document.getElementById('noiseChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: { 
+                labels: Array(20).fill(''), 
+                datasets: [{ 
+                    data: dbHistory, 
+                    borderColor: '#38bdf8', 
+                    borderWidth: 3,
+                    fill: true, 
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)', 
+                    tension: 0.4, 
+                    pointRadius: 0 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { 
+                    y: { 
+                        min: 0, 
+                        max: 100, 
+                        display: false 
+                    }, 
+                    x: { display: false } 
+                } 
+            }
+        });
+
+        async function startMonitoring() {
+            try {
+                // Minta izin akses mikrofon
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const analyzer = audioContext.createAnalyser();
+                const microphone = audioContext.createMediaStreamSource(stream);
+                
+                microphone.connect(analyzer);
+                analyzer.fftSize = 256;
+                const bufferLength = analyzer.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                document.querySelector('.start-btn').innerText = "SYSTEM ACTIVE";
+                document.querySelector('.start-btn').style.background = "#1e293b";
+                document.querySelector('.start-btn').style.color = "#38bdf8";
+                document.querySelector('.start-btn').style.border = "1px solid #38bdf8";
+
+                function loop() {
+                    analyzer.getByteFrequencyData(dataArray);
+                    
+                    // Menghitung rata-rata volume (desibel simulasi)
+                    let sum = 0;
+                    for(let i = 0; i < bufferLength; i++) {
+                        sum += dataArray[i];
+                    }
+                    let average = sum / bufferLength;
+                    let db = Math.round(average * 1.5); // Penyesuaian sensitivitas
+                    
+                    // Update Tampilan Angka
+                    document.getElementById('db-val').innerText = db;
+                    
+                    // Update Grafik
+                    dbHistory.push(db); 
+                    dbHistory.shift(); 
+                    chart.update();
+                    
+                    // Update Status Badge
+                    const status = document.getElementById('status');
+                    if(db > 70) { 
+                        status.innerText = "POLUSI SUARA!"; 
+                        status.className = "status-badge badge-danger"; 
+                    } else { 
+                        status.innerText = "LINGKUNGAN TENANG"; 
+                        status.className = "status-badge badge-safe"; 
+                    }
+                    
+                    requestAnimationFrame(loop);
+                }
+                loop();
+                
+            } catch (err) { 
+                console.error(err);
+                alert("Izin Mikrofon Ditolak! Harap berikan izin untuk menggunakan fitur ini."); 
+            }
+        }
+    </script>
+</body>
+</html>
